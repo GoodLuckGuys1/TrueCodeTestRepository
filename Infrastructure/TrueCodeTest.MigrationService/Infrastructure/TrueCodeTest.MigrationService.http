@@ -1,0 +1,6 @@
+@TrueCodeTest.MigrationService_HostAddress = http://localhost:5034
+
+GET {{TrueCodeTest.MigrationService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
