@@ -1,23 +1,25 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using TrueCodeTest.Shared.Domain.Data;
+using TrueCodeTest.FinanceService.Domain.Interfaces;
 using TrueCodeTest.Shared.Domain.Entities;
 
 namespace TrueCodeTest.FinanceService.Application.Commands.RemoveFavoriteCurrency;
 
 public class RemoveFavoriteCurrencyCommandHandler : IRequestHandler<RemoveFavoriteCurrencyCommand, RemoveFavoriteCurrencyResult>
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICurrencyRepository _currencyRepository;
+    private readonly IUserCurrencyRepository _userCurrencyRepository;
 
-    public RemoveFavoriteCurrencyCommandHandler(ApplicationDbContext dbContext)
+    public RemoveFavoriteCurrencyCommandHandler(
+        ICurrencyRepository currencyRepository,
+        IUserCurrencyRepository userCurrencyRepository)
     {
-        _dbContext = dbContext;
+        _currencyRepository = currencyRepository;
+        _userCurrencyRepository = userCurrencyRepository;
     }
 
     public async Task<RemoveFavoriteCurrencyResult> Handle(RemoveFavoriteCurrencyCommand request, CancellationToken cancellationToken)
     {
-        var currency = await _dbContext.Currencies
-            .FirstOrDefaultAsync(c => c.Name == request.CurrencyName, cancellationToken);
+        var currency = await _currencyRepository.GetByNameAsync(request.CurrencyName, cancellationToken);
 
         if (currency == null)
         {
@@ -28,8 +30,7 @@ public class RemoveFavoriteCurrencyCommandHandler : IRequestHandler<RemoveFavori
             };
         }
 
-        var userCurrency = await _dbContext.UserCurrencies
-            .FirstOrDefaultAsync(uc => uc.UserId == request.UserId && uc.CurrencyId == currency.Id, cancellationToken);
+        var userCurrency = await _userCurrencyRepository.GetByUserAndCurrencyAsync(request.UserId, currency.Id, cancellationToken);
 
         if (userCurrency == null)
         {
@@ -40,8 +41,7 @@ public class RemoveFavoriteCurrencyCommandHandler : IRequestHandler<RemoveFavori
             };
         }
 
-        _dbContext.UserCurrencies.Remove(userCurrency);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _userCurrencyRepository.RemoveAsync(userCurrency, cancellationToken);
 
         return new RemoveFavoriteCurrencyResult { Success = true };
     }

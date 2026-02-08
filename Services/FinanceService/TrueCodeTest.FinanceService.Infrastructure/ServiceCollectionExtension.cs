@@ -20,6 +20,7 @@ public static class ServiceCollectionExtension
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+        services.AddScoped<IUserCurrencyRepository, UserCurrencyRepository>();
 
         return services;
     }

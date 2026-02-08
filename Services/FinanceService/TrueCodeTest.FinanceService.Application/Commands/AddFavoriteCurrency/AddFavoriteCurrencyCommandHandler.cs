@@ -1,23 +1,25 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using TrueCodeTest.Shared.Domain.Data;
+using TrueCodeTest.FinanceService.Domain.Interfaces;
 using TrueCodeTest.Shared.Domain.Entities;
 
 namespace TrueCodeTest.FinanceService.Application.Commands.AddFavoriteCurrency;
 
 public class AddFavoriteCurrencyCommandHandler : IRequestHandler<AddFavoriteCurrencyCommand, AddFavoriteCurrencyResult>
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICurrencyRepository _currencyRepository;
+    private readonly IUserCurrencyRepository _userCurrencyRepository;
 
-    public AddFavoriteCurrencyCommandHandler(ApplicationDbContext dbContext)
+    public AddFavoriteCurrencyCommandHandler(
+        ICurrencyRepository currencyRepository,
+        IUserCurrencyRepository userCurrencyRepository)
     {
-        _dbContext = dbContext;
+        _currencyRepository = currencyRepository;
+        _userCurrencyRepository = userCurrencyRepository;
     }
 
     public async Task<AddFavoriteCurrencyResult> Handle(AddFavoriteCurrencyCommand request, CancellationToken cancellationToken)
     {
-        var currency = await _dbContext.Currencies
-            .FirstOrDefaultAsync(c => c.Name == request.CurrencyName, cancellationToken);
+        var currency = await _currencyRepository.GetByNameAsync(request.CurrencyName, cancellationToken);
 
         if (currency == null)
         {
@@ -28,10 +30,9 @@ public class AddFavoriteCurrencyCommandHandler : IRequestHandler<AddFavoriteCurr
             };
         }
 
-        var existing = await _dbContext.UserCurrencies
-            .FirstOrDefaultAsync(uc => uc.UserId == request.UserId && uc.CurrencyId == currency.Id, cancellationToken);
+        var exists = await _userCurrencyRepository.ExistsAsync(request.UserId, currency.Id, cancellationToken);
 
-        if (existing != null)
+        if (exists)
         {
             return new AddFavoriteCurrencyResult
             {
@@ -40,13 +41,11 @@ public class AddFavoriteCurrencyCommandHandler : IRequestHandler<AddFavoriteCurr
             };
         }
 
-        _dbContext.UserCurrencies.Add(new UserCurrency
+        await _userCurrencyRepository.AddAsync(new UserCurrency
         {
             UserId = request.UserId,
             CurrencyId = currency.Id
-        });
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
 
         return new AddFavoriteCurrencyResult { Success = true };
     }

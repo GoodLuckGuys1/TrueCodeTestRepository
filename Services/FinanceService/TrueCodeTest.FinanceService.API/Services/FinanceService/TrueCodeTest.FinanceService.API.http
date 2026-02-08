@@ -1,6 +1,0 @@
-@TrueCodeTest.FinanceService.API_HostAddress = http://localhost:5080
-
-GET {{TrueCodeTest.FinanceService.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

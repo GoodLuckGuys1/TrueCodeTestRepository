@@ -14,6 +14,47 @@ public class CurrencyRepository : ICurrencyRepository
         _context = context;
     }
 
+    public async Task<Currency?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+    {
+        return await _context.Currencies
+            .FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+    }
+
+    public async Task<Currency?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Currencies
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
+    public async Task<IEnumerable<Currency>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Currencies
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Currency> CreateAsync(Currency currency, CancellationToken cancellationToken = default)
+    {
+        _context.Currencies.Add(currency);
+        await _context.SaveChangesAsync(cancellationToken);
+        return currency;
+    }
+
+    public async Task UpdateAsync(Currency currency, CancellationToken cancellationToken = default)
+    {
+        _context.Currencies.Update(currency);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var currency = await GetByIdAsync(id, cancellationToken);
+        if (currency != null)
+        {
+            _context.Currencies.Remove(currency);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     public async Task<List<Currency>> GetUserFavoriteCurrenciesAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _context.UserCurrencies
