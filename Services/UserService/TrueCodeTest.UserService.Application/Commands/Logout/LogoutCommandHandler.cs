@@ -35,7 +35,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, LogoutResult>
             return new LogoutResult
             {
                 Success = true,
-                Message = "Успешная разлогинивание"
+                Message = "Успешное разлогинивание"
             };
         }
         catch (Exception ex)
